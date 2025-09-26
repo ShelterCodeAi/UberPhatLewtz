@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AINPC, NPCFactory, DialogueContext } from '../utils/aiNPC';
 
 interface GameState {
   currentRoom: string;
@@ -21,6 +22,7 @@ interface Room {
     health: number;
     damage: number;
   };
+  npc?: AINPC;
 }
 
 const rooms: { [key: string]: Room } = {
@@ -29,14 +31,16 @@ const rooms: { [key: string]: Room } = {
     name: 'Forest Entrance',
     description: 'You stand at the entrance of a dark forest. Ancient trees tower above you, their branches creating shadows that dance in the moonlight.',
     exits: { north: 'clearing', east: 'cave' },
-    items: ['stick']
+    items: ['stick'],
+    npc: NPCFactory.createNPC('friendly', 'Forest Guide Elara')
   },
   clearing: {
     id: 'clearing',
     name: 'Forest Clearing',
     description: 'A peaceful clearing with a small pond reflecting the stars. You can hear the gentle sound of flowing water.',
     exits: { south: 'start', west: 'ruins' },
-    items: ['healing potion']
+    items: ['healing potion'],
+    npc: NPCFactory.createNPC('wise', 'Elder Sage Meridian')
   },
   cave: {
     id: 'cave',
@@ -54,7 +58,8 @@ const rooms: { [key: string]: Room } = {
     name: 'Ancient Ruins',
     description: 'Crumbling stone structures covered in mysterious runes. An ancient altar stands in the center.',
     exits: { east: 'clearing' },
-    items: ['magic sword']
+    items: ['magic sword'],
+    npc: NPCFactory.createNPC('mysterious', 'Ancient Guardian Spirit')
   },
   treasure: {
     id: 'treasure',
@@ -75,10 +80,76 @@ const TextAdventure: React.FC = () => {
     victory: false
   });
   const [command, setCommand] = useState<string>('');
-  const [gameLog, setGameLog] = useState<string[]>(['Welcome to the Forest Adventure!']);
+  const [gameLog, setGameLog] = useState<string[]>(['Welcome to the Enhanced Forest Adventure with AI NPCs!']);
+  const [currentNPC, setCurrentNPC] = useState<AINPC | null>(null);
+  const [currentDialogue, setCurrentDialogue] = useState<any>(null);
+  const [inDialogue, setInDialogue] = useState<boolean>(false);
 
   const addToLog = (text: string) => {
     setGameLog(prev => [...prev, text]);
+  };
+
+  const talkToNPC = (npc: AINPC) => {
+    const context: DialogueContext = {
+      playerLevel: Math.floor(gameState.score / 100) + 1,
+      playerInventory: gameState.inventory,
+      previousInteractions: 0,
+      currentLocation: gameState.currentRoom
+    };
+
+    const dialogue = npc.generateDialogue(context);
+    setCurrentNPC(npc);
+    setCurrentDialogue(dialogue);
+    setInDialogue(true);
+    addToLog(`${npc.name}: "${dialogue.text}"`);
+  };
+
+  const handleDialogueOption = (option: any) => {
+    if (!currentNPC) return;
+
+    addToLog(`You: "${option.text}"`);
+    
+    // Process the option based on action
+    switch (option.action) {
+      case 'continue':
+        // Continue conversation with new dialogue
+        const context: DialogueContext = {
+          playerLevel: Math.floor(gameState.score / 100) + 1,
+          playerInventory: gameState.inventory,
+          previousInteractions: 1,
+          currentLocation: gameState.currentRoom
+        };
+        const newDialogue = currentNPC.generateDialogue(context);
+        setCurrentDialogue(newDialogue);
+        addToLog(`${currentNPC.name}: "${newDialogue.text}"`);
+        break;
+      case 'trade':
+        addToLog(`${currentNPC.name} offers to trade with you.`);
+        if (gameState.inventory.includes('stick') && !gameState.inventory.includes('iron sword')) {
+          setGameState(prev => ({
+            ...prev,
+            inventory: prev.inventory.filter(item => item !== 'stick').concat(['iron sword']),
+            score: prev.score + 50
+          }));
+          addToLog("You traded your stick for an iron sword!");
+        }
+        endDialogue();
+        break;
+      case 'quest':
+        addToLog(`${currentNPC.name} gives you a quest!`);
+        setGameState(prev => ({ ...prev, score: prev.score + 100 }));
+        endDialogue();
+        break;
+      case 'leave':
+        endDialogue();
+        break;
+    }
+  };
+
+  const endDialogue = () => {
+    setCurrentNPC(null);
+    setCurrentDialogue(null);
+    setInDialogue(false);
   };
 
   const processCommand = (cmd: string) => {
@@ -96,6 +167,9 @@ const TextAdventure: React.FC = () => {
           newMessage = `${currentRoom.name}: ${currentRoom.description}`;
           if (currentRoom.items && currentRoom.items.length > 0) {
             newMessage += ` You see: ${currentRoom.items.join(', ')}.`;
+          }
+          if (currentRoom.npc) {
+            newMessage += ` ${currentRoom.npc.name} is here. You can "talk" to them.`;
           }
           if (currentRoom.exits) {
             newMessage += ` Exits: ${Object.keys(currentRoom.exits).join(', ')}.`;
@@ -182,8 +256,18 @@ const TextAdventure: React.FC = () => {
           : 'Your inventory is empty.';
         break;
 
+      case 'talk':
+      case 'speak':
+        if (currentRoom.npc) {
+          talkToNPC(currentRoom.npc);
+          return; // Don't add command to log yet, NPC will handle it
+        } else {
+          newMessage = 'There is no one here to talk to.';
+        }
+        break;
+
       case 'help':
-        newMessage = 'Commands: look, go [direction], take [item], use [item], inventory, help. Directions: north, south, east, west.';
+        newMessage = 'Commands: look, go [direction], take [item], use [item], talk, inventory, help. Directions: north, south, east, west.';
         break;
 
       default:
@@ -211,8 +295,11 @@ const TextAdventure: React.FC = () => {
       gameOver: false,
       victory: false
     });
-    setGameLog(['Welcome to the Forest Adventure!']);
+    setGameLog(['Welcome to the Enhanced Forest Adventure with AI NPCs!']);
     setCommand('');
+    setCurrentNPC(null);
+    setCurrentDialogue(null);
+    setInDialogue(false);
     
     // Reset room items
     rooms.start.items = ['stick'];
@@ -229,8 +316,8 @@ const TextAdventure: React.FC = () => {
   return (
     <div className="container">
       <div className="category-header">
-        <h1>⚔️ Text Adventure</h1>
-        <p>Explore the mysterious forest and find the legendary Crystal of Power!</p>
+        <h1>⚔️ Enhanced Text Adventure</h1>
+        <p>Explore the mysterious forest with AI-driven NPCs and find the legendary Crystal of Power!</p>
       </div>
       
       <div className="game-board">
@@ -324,6 +411,65 @@ const TextAdventure: React.FC = () => {
                 New Game
               </button>
             </div>
+
+            {/* Dialogue Panel */}
+            {inDialogue && currentNPC && currentDialogue && (
+              <div style={{
+                backgroundColor: 'rgba(0, 0, 50, 0.95)',
+                padding: '20px',
+                borderRadius: '15px',
+                marginTop: '20px',
+                border: '2px solid #4169E1'
+              }}>
+                <h3 style={{ color: '#4169E1', textAlign: 'center' }}>💬 Dialogue</h3>
+                <div style={{
+                  backgroundColor: '#000',
+                  padding: '15px',
+                  borderRadius: '10px',
+                  marginBottom: '15px',
+                  border: '1px solid #4169E1'
+                }}>
+                  <div style={{ 
+                    color: '#4169E1', 
+                    fontWeight: 'bold', 
+                    marginBottom: '10px' 
+                  }}>
+                    {currentNPC.name}:
+                  </div>
+                  <div style={{ color: '#ffffff' }}>
+                    "{currentDialogue.text}"
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 style={{ color: '#4169E1', marginBottom: '10px' }}>Your Response:</h4>
+                  {currentDialogue.options.map((option: any, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => handleDialogueOption(option)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '12px',
+                        margin: '8px 0',
+                        backgroundColor: '#4169E1',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontSize: '14px',
+                        transition: 'background-color 0.3s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#6495ED'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4169E1'}
+                    >
+                      {option.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

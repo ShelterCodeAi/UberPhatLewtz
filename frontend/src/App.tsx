@@ -8,6 +8,10 @@ import TicTacToe from './games/TicTacToe';
 import ConnectFour from './games/ConnectFour';
 import TextAdventure from './games/TextAdventure';
 import ResourceManager from './games/ResourceManager';
+import DungeonQuest from './games/DungeonQuest';
+import MysticVillage from './games/MysticVillage';
+import CityBuilderPro from './games/CityBuilderPro';
+import NeonRunner from './games/NeonRunner';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -23,6 +27,10 @@ function App() {
           <Route path="/game/connect-four" element={<ConnectFour />} />
           <Route path="/game/text-adventure" element={<TextAdventure />} />
           <Route path="/game/resource-manager" element={<ResourceManager />} />
+          <Route path="/game/dungeon-quest" element={<DungeonQuest />} />
+          <Route path="/game/mystic-village" element={<MysticVillage />} />
+          <Route path="/game/city-builder-pro" element={<CityBuilderPro />} />
+          <Route path="/game/neon-runner" element={<NeonRunner />} />
         </Routes>
       </div>
     </Router>
