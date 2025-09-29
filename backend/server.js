@@ -35,35 +35,45 @@ app.get('/api/games', (req, res) => {
         id: 'rpg',
         name: 'Role Playing Games',
         games: [
-          { id: 'text-adventure', name: 'Text Adventure', players: 'single' }
+          { id: 'text-adventure', name: 'Text Adventure', players: 'single' },
+          { id: 'dungeon-quest', name: 'Dungeon Quest', players: 'single' },
+          { id: 'mystic-village', name: 'Mystic Village', players: 'single' }
         ]
       },
       {
         id: 'rts',
         name: 'Real Time Strategy',
         games: [
-          { id: 'resource-manager', name: 'Resource Manager', players: 'single' }
+          { id: 'resource-manager', name: 'Resource Manager', players: 'single' },
+          { id: 'city-builder-pro', name: 'City Builder Pro', players: 'single' },
+          { id: 'space-colony', name: 'Space Colony', players: 'single' }
         ]
       },
       {
         id: 'arcade',
         name: 'Arcade Games',
         games: [
-          { id: 'snake', name: 'Snake Game', players: 'single' }
+          { id: 'snake', name: 'Snake Game', players: 'single' },
+          { id: 'neon-runner', name: 'Neon Runner', players: 'single' },
+          { id: 'particle-shooter', name: 'Particle Shooter', players: 'single' }
         ]
       },
       {
         id: 'multiplayer',
         name: 'Multiplayer Games',
         games: [
-          { id: 'tic-tac-toe', name: 'Tic Tac Toe', players: 'multiplayer' }
+          { id: 'tic-tac-toe', name: 'Tic Tac Toe', players: 'multiplayer' },
+          { id: 'battle-arena', name: 'Battle Arena', players: 'multiplayer' },
+          { id: 'realtime-quiz', name: 'Realtime Quiz', players: 'multiplayer' }
         ]
       },
       {
         id: 'board',
         name: 'Board Games',
         games: [
-          { id: 'connect-four', name: 'Connect Four', players: 'multiplayer' }
+          { id: 'connect-four', name: 'Connect Four', players: 'multiplayer' },
+          { id: 'strategic-chess', name: 'Strategic Chess', players: 'multiplayer' },
+          { id: 'advanced-checkers', name: 'Advanced Checkers', players: 'multiplayer' }
         ]
       }
     ]
